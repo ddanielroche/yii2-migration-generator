@@ -18,6 +18,9 @@
     "require": {
         "yiisoft/yii2": "^2.0.6"
     },
+    "require-dev": {
+        "yiisoft/yii2-gii": "*"
+    },
     "autoload": {
         "psr-4": {
             "ddanielroche\\migration\\": ""
