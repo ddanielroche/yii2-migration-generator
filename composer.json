@@ -2,7 +2,12 @@
     "name": "ddanielroche/yii2-migration-generator",
     "description": "Generate migration files for one table, comma separated list of tables, part of table name or all tables.",
     "type": "yii2-extension",
-    "keywords": ["yii2","extension","gii","migration"],
+    "keywords": [
+        "yii2",
+        "extension",
+        "gii",
+        "migration"
+    ],
     "license": "BSD-3-Clause",
     "authors": [
         {
@@ -11,7 +16,7 @@
         }
     ],
     "require": {
-        "yiisoft/yii2": "*"
+        "yiisoft/yii2": "^2.0.6"
     },
     "autoload": {
         "psr-4": {
