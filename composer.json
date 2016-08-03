@@ -25,5 +25,8 @@
         "psr-4": {
             "ddanielroche\\migration\\": ""
         }
+    },
+    "extra": {
+        "bootstrap": "ddanielroche\\migration\\Bootstrap"
     }
 }
