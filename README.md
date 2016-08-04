@@ -2,6 +2,8 @@ Migration Generator for Yii2 databases supports.
 ================================================
 Generate migration files for one table, comma separated list of tables, part of table name or all tables.
 
+[![build status](https://git.versat.azcuba.cu/backend/yii2-migration-generator/badges/master/build.svg)](https://git.versat.azcuba.cu/backend/yii2-migration-generator/commits/master)
+
 Installation
 ------------
 
