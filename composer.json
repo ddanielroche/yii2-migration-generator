@@ -28,6 +28,10 @@
         }
     },
     "extra": {
-        "bootstrap": "ddanielroche\\migration\\Bootstrap"
+        "bootstrap": "ddanielroche\\migration\\Bootstrap",
+        "asset-installer-paths": {
+            "npm-asset-library": "vendor/npm",
+            "bower-asset-library": "vendor/bower"
+        }
     }
 }

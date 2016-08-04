@@ -12,4 +12,4 @@ before_script:
 # Run PHP Code Sniffer.
 code_sniffer:
   script:
-  - ../versat-rest-api/vendor/bin/phpcs --standard=../versat-rest-api/vendor/yiisoft/yii2-coding-standards/Yii2/ --extensions=php --ignore=vendor/ .
+  - vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2/ --extensions=php --ignore=vendor/ .
