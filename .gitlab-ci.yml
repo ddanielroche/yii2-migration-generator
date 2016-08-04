@@ -7,7 +7,6 @@ cache:
 
 before_script:
   # Install composer dependencies
-  - /home/dany.daniel/repos/composer/install.sh
   - composer install
 
 # Run PHP Code Sniffer.
