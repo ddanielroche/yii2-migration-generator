@@ -19,6 +19,8 @@ $tableAlias = $generator->usePrefix ? $tableAlias : $tableName;
 echo "<?php\n";
 ?>
 
+namespace <?= $generator->migrationNamespace ?>;
+
 use yii\db\Migration;
 
 class <?= $migrationName ?> extends Migration

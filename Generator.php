@@ -2,22 +2,26 @@
 
 namespace ddanielroche\migration;
 
+use yii\db\ColumnSchema;
 use yii\db\Connection;
-use Yii;
-use yii\db\Expression;
+use yii;
 use yii\db\Schema;
 use yii\gii\CodeFile;
 use yii\db\TableSchema;
+use yii\helpers\Inflector;
 
 class Generator extends \yii\gii\Generator
 {
     public $db = 'db';
-    public $migrationPath = '@app/migrations';
+    public $migrationNamespace = 'app\migrations';
     public $tableName;
     public $tableIgnore;
     public $genmode = 'single';
     public $usePrefix = true;
     public $tableOptions = 'ENGINE=InnoDB';
+    public $gmdate;
+    public $structure;
+    public $data;
 
     private $_ignoredTables = [];
     private $_tables = [];
@@ -44,23 +48,37 @@ class Generator extends \yii\gii\Generator
     public function rules()
     {
         return array_merge(parent::rules(), [
-            [['db', 'tableName', 'tableIgnore'], 'filter', 'filter' => 'trim'],
-            [['db', 'tableName'], 'required'],
+            [['db', 'migrationNamespace'], 'filter', 'filter' => 'trim'],
+            [['db', 'tableName', 'migrationNamespace'], 'required'],
             [['db'], 'match', 'pattern' => '/^\w+$/', 'message' => 'Only word characters are allowed.'],
-            [
-                ['tableName', 'tableIgnore'],
-                'match',
-                'pattern' => '/[^\w\*_\,\-\s]/',
-                'not' => true,
-                'message' => 'Only word characters, underscore, comma, and optionally an asterisk are allowed.'
-            ],
+            [['tableIgnore', 'gmdate'], 'safe'],
             [['db'], 'validateDb'],
             [['tableName'], 'validateTableName'],
-            ['migrationPath', 'safe'],
             ['tableOptions', 'safe'],
-            [['usePrefix'], 'boolean'],
+            [['usePrefix', 'structure', 'data'], 'boolean'],
             [['genmode'], 'in', 'range' => ['single', 'mass']],
+
+            [['migrationNamespace'], 'filter', 'filter' => function ($value) {
+                return trim($value, '\\');
+            }],
+            [['migrationNamespace'], 'match', 'pattern' => '/^[\w\\\\]+$/', 'message' => 'Only word characters and backslashes are allowed.'],
+            [['migrationNamespace'], 'validateNamespace'],
         ]);
+    }
+
+    /**
+     * Validates the namespace.
+     *
+     * @param string $attribute Namespace variable.
+     */
+    public function validateNamespace($attribute)
+    {
+        $value = $this->$attribute;
+        $value = ltrim($value, '\\');
+        $path = Yii::getAlias('@' . str_replace('\\', '/', $value), false);
+        if ($path === false || !file_exists($path)) {
+            $this->addError($attribute, 'Namespace must be associated with an existing directory.');
+        }
     }
 
     /**
@@ -72,8 +90,10 @@ class Generator extends \yii\gii\Generator
             'db' => 'Database Connection ID',
             'tableName' => 'Table Name',
             'tableIgnore' => 'Ignored tables',
-            'migrationPath' => 'Migration Path',
+            'migrationNamespace' => 'Migration Namespace',
             'usePrefix' => 'Replace table prefix',
+            'structure' => 'Generate Structure',
+            'data' => 'Generate Data',
             'genmode' => 'Generation Mode',
             'tableOptions' => 'Table Options'
         ]);
@@ -88,7 +108,7 @@ class Generator extends \yii\gii\Generator
             'db' => 'This is the ID of the DB application component.',
             'tableName' => 'Use "*" for all table, mask support - as "tablepart*", or you can separate table names by comma ',
             'tableIgnore' => 'You can separate some table names by comma, for ignor ',
-            'migrationPath' => 'Path for save migration file',
+            'migrationNamespace' => 'Namespace for save migration files, e.g., <code>app\migrations</code>',
             'usePrefix' => 'Use Table Prefix Replacer eg.{{%tablename}} instead of prefix_tablename',
             'genmode' => 'All tables in separated files, or all in one file',
             'tableOptions' => 'Table Options'
@@ -127,7 +147,7 @@ class Generator extends \yii\gii\Generator
     {
         return array_merge(
             parent::stickyAttributes(),
-            ['db', 'migrationPath', 'usePrefix', 'tableOptions', 'tableIgnore']
+            ['db', 'migrationNamespace', 'usePrefix', 'structure', 'data', 'tableOptions']
         );
     }
 
@@ -148,15 +168,16 @@ class Generator extends \yii\gii\Generator
     {
         $files = $tableRelations = $tableList = [];
         $db = $this->getDbConnection();
-        $i = 1000;
-        $gmdate = gmdate('ymd_H');
+        if (!$this->gmdate) {
+            $this->gmdate = gmdate('ymdHms');
+        }
         if ($this->genmode == 'single') {
             foreach ($this->getTables() as $tableName) {
-                $i++;
                 $tableSchema = $db->getTableSchema($tableName);
-                $tableCaption = $this->getTableCaption($tableName);
+                $tableCaption = Inflector::id2camel($this->getTableCaption($tableName), '_');
                 $tableAlias = $this->getTableAlias($tableCaption);
-                $tableIndexes = $this->generateUniqueIndexes($tableSchema);
+                $tableUniqueIndexes = $this->generateUniqueIndexes($tableSchema);
+                $tableIndexes = $this->generateIndexes($tableSchema);
                 $tableColumns = $this->columnsBySchema($tableSchema);
                 $tableRelations[] = [
                     'fKeys' => $this->generateRelations($tableSchema),
@@ -164,7 +185,7 @@ class Generator extends \yii\gii\Generator
                     'tableName' => $tableName
                 ];
                 $tablePrimaryKey = $this->generatePrimaryKey($tableSchema);
-                $migrationName = "m{$gmdate}{$i}_{$tableCaption}";
+                $migrationName = "M{$this->gmdate}{$tableCaption}";
                 $params = compact(
                     'tableName',
                     'tableSchema',
@@ -172,28 +193,29 @@ class Generator extends \yii\gii\Generator
                     'tableAlias',
                     'migrationName',
                     'tableColumns',
+                    'tableUniqueIndexes',
                     'tableIndexes',
                     'tablePrimaryKey'
                 );
                 $files[] = new CodeFile(
-                    Yii::getAlias($this->migrationPath) . '/' . $migrationName . '.php',
+                    Yii::getAlias('@' . str_replace('\\', '/', $this->migrationNamespace)) . "/$migrationName.php",
                     $this->render('migration.php', $params)
                 );
             }
-            $i++;
-            $migrationName = "m{$gmdate}{$i}_relations";
+            $this->gmdate = $this->gmdate + 1;
+            $migrationName = "M{$this->gmdate}Relations";
             $params = ['tableRelations' => $tableRelations, 'migrationName' => $migrationName];
             $files[] = new CodeFile(
-                Yii::getAlias($this->migrationPath) . '/' . $migrationName . '.php',
+                Yii::getAlias('@' . str_replace('\\', '/', $this->migrationNamespace)) . "/$migrationName.php",
                 $this->render('relation.php', $params)
             );
         } else {
             foreach ($this->getTables() as $tableName) {
-                $i++;
                 $tableSchema = $db->getTableSchema($tableName);
                 $tableCaption = $this->getTableCaption($tableName);
                 $tableAlias = $this->getTableAlias($tableCaption);
-                $tableIndexes = $this->generateUniqueIndexes($tableSchema);
+                $tableUniqueIndexes = $this->generateUniqueIndexes($tableSchema);
+                $tableIndexes = $this->generateIndexes($tableSchema);
                 $tableColumns = $this->columnsBySchema($tableSchema);
                 $tableRelations[] = [
                     'fKeys' => $this->generateRelations($tableSchema),
@@ -203,20 +225,21 @@ class Generator extends \yii\gii\Generator
                 $tablePrimaryKey = $this->generatePrimaryKey($tableSchema);
                 $tableList[] = [
                     'alias' => $tableAlias,
+                    'uniqueIndexes' => $tableUniqueIndexes,
                     'indexes' => $tableIndexes,
                     'columns' => $tableColumns,
                     'name' => $tableName,
                     'tablePrimaryKey' => $tablePrimaryKey
                 ];
             }
-            $migrationName = "m{$gmdate}{$i}_mass";
+            $migrationName = "M{$this->gmdate}Mass";
             $params = [
                 'tableList' => $tableList,
                 'tableRelations' => $tableRelations,
                 'migrationName' => $migrationName
             ];
             $files[] = new CodeFile(
-                Yii::getAlias($this->migrationPath) . '/' . $migrationName . '.php',
+                Yii::getAlias('@' . str_replace('\\', '/', $this->migrationNamespace)) . "/$migrationName.php",
                 $this->render('mass.php', $params)
             );
         }
@@ -279,10 +302,12 @@ class Generator extends \yii\gii\Generator
                 $coldata = '$this->smallInteger(' . $col->precision . ')';
                 break;
             case Schema::TYPE_INTEGER: // TODO agregar clave primaria cuando no es autoIncrement.
-                $coldata = ($col->isPrimaryKey && $col->autoIncrement) ? '$this->primaryKey(' . $col->precision . ')' : '$this->integer(' . $col->precision . ')';
+                $length = $col->precision ? $col->precision : $col->size;
+                $coldata = ($col->isPrimaryKey && $col->autoIncrement) ? '$this->primaryKey(' . $length . ')' : '$this->integer(' . $length . ')';
                 break;
             case Schema::TYPE_BIGINT:
-                $coldata = ($col->isPrimaryKey && $col->autoIncrement) ? '$this->bigPrimaryKey(' . $col->precision . ')' : '$this->bigInteger(' . $col->precision . ')';
+                $length = $col->precision ? $col->precision : $col->size;
+                $coldata = ($col->isPrimaryKey && $col->autoIncrement) ? '$this->bigPrimaryKey(' . $length . ')' : '$this->bigInteger(' . $length . ')';
                 break;
             case Schema::TYPE_FLOAT:
                 $coldata = '$this->float(' . $col->precision . ')';
@@ -324,15 +349,46 @@ class Generator extends \yii\gii\Generator
         if (!$col->allowNull && !$col->autoIncrement) {
             $coldata .= '->notNull()';
         }
-        if ($col->defaultValue) {
-            $col->defaultValue = trim($col->defaultValue, "()");
-            $coldata .= "->defaultValue('$col->defaultValue')";
-        }
+        $coldata .= $this->buildDefaultValue($col);
         if (!empty($col->comment)) {
             $coldata .= "->comment('$col->comment')";
         }
 
         return $coldata;
+    }
+
+    /**
+     * Builds the default value specification for the column.
+     *
+     * @param ColumnSchema $column
+     *
+     * @return string string with default value of column.
+     */
+    protected function buildDefaultValue(ColumnSchema $column)
+    {
+        if ($column->defaultValue === null) {
+            return '';
+        }
+
+        switch (gettype($column->defaultValue)) {
+            case 'integer':
+                $string = 'defaultValue(' . $column->defaultValue . ')';
+                break;
+            case 'double':
+                // ensure type cast always has . as decimal separator in all locales
+                $string = 'defaultValue("' . str_replace(',', '.', (string)$column->defaultValue) . '")';
+                break;
+            case 'boolean':
+                $string = $column->defaultValue ? 'defaultValue(true)' : 'defaultValue(false)';
+                break;
+            case 'object':
+                $string = 'defaultExpression("' . (string)$column->defaultValue . '")';
+                break;
+            default:
+                $string = "defaultValue('{$column->defaultValue}')";
+        }
+
+        return '->'. $string;
     }
 
     /**
@@ -386,19 +442,7 @@ class Generator extends \yii\gii\Generator
 
     public function generateIndexes($tableName)
     {
-        $indexes = [];
-        if ($this->getDbConnection()->driverName == 'mysql') {
-            $query = $this->getDbConnection()->createCommand('SHOW INDEX FROM [[' . $tableName . ']]')->queryAll();
-            if ($query) {
-                foreach ($query as $i => $index) {
-                    $indexes[$index['Key_name']]['cols'][$index['Seq_in_index']] = $index['Column_name'];
-                    $indexes[$index['Key_name']]['isuniq'] = ($index['Non_unique'] == 1) ? 0 : 1;
-                }
-            }
-        } else {
-            //Skip index getter for postgresql
-        }
-
+        $indexes = $this->getDbConnection()->getSchema()->findIndexes($tableName);
 
         return $indexes;
     }
@@ -452,12 +496,14 @@ class Generator extends \yii\gii\Generator
     public function prepareIgnored()
     {
         $ignors = [];
-        if ($this->tableIgnore) {
+        if (is_string($this->tableIgnore)) {
             if (strpos($this->tableIgnore, ',') !== false) {
                 $ignors = explode(',', $this->tableIgnore);
             } else {
                 $ignors[] = $this->tableIgnore;
             }
+        } elseif (is_array($this->tableIgnore)) {
+            $ignors = $this->tableIgnore;
         }
         $ignors = array_filter($ignors, 'trim');
         if (!empty($ignors)) {
@@ -506,12 +552,14 @@ class Generator extends \yii\gii\Generator
     {
         $tables = [];
         $this->prepareIgnored();
-        if ($this->tableName) {
+        if (is_string($this->tableName)) {
             if (strpos($this->tableName, ',') !== false) {
                 $tables = explode(',', $this->tableName);
             } else {
                 $tables[] = $this->tableName;
             }
+        } elseif (is_array($this->tableName)) {
+            $tables = $this->tableName;
         }
         if (!empty($tables)) {
             foreach ($tables as $goodTable) {
@@ -566,5 +614,22 @@ class Generator extends \yii\gii\Generator
             'updated' => 'Обновлено'
         ];
         return isset($defaults[$labelname]) ? $defaults[$labelname] : $default;
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function successMessage()
+    {
+        $output = <<<EOD
+<p>The migration has been generated successfully.</p>
+<p>To apply migration, execute this code un comman line:</p>
+EOD;
+        $path = \Yii::$app->basePath;
+        $code = <<<EOD
+$ cd $path
+$ yii migrate
+EOD;
+        return $output . '<pre>' . highlight_string($code, true) . '</pre>';
     }
 }

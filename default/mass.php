@@ -14,6 +14,8 @@
 echo "<?php\n";
 ?>
 
+namespace <?= $generator->migrationNamespace ?>;
+
 use yii\db\Migration;
 
 class <?= $migrationName ?> extends Migration
@@ -36,11 +38,18 @@ class <?= $migrationName ?> extends Migration
 
         $this->addPrimaryKey('<?= $tableData['name'] ?>_pk', '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>', '<?= implode(", ", $tableData['tablePrimaryKey']) ?>');
 <?php endif; ?>
-<?php if (!empty($tableData['indexes']) && is_array($tableData['indexes'])) : ?>
+<?php if (!empty($tableData['uniqueIndexes']) && is_array($tableData['uniqueIndexes'])) : ?>
 
-<?php foreach ($tableData['indexes'] as $name => $columns) : ?>
+<?php foreach ($tableData['uniqueIndexes'] as $name => $columns) : ?>
 <?php if ($name != 'PRIMARY') : ?>
         $this->createIndex('<?= $name ?>', '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>', '<?= implode(", ", $columns) ?>', true);
+<?php endif; ?>
+<?php endforeach; ?>
+<?php endif ?>
+<?php if (!empty($tableData['indexes']) && is_array($tableData['indexes'])) : ?>
+<?php foreach ($tableData['indexes'] as $name => $columns) : ?>
+<?php if ($name != 'PRIMARY') : ?>
+        $this->createIndex('<?= $name ?>', '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>', '<?= implode(", ", $columns) ?>', false);
 <?php endif; ?>
 <?php endforeach; ?>
 <?php endif ?>
