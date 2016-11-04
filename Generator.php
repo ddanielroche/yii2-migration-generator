@@ -223,13 +223,15 @@ class Generator extends \yii\gii\Generator
                     'tableName' => $tableName
                 ];
                 $tablePrimaryKey = $this->generatePrimaryKey($tableSchema);
+                $data = $this->generateData($tableName, array_keys($tableColumns));
                 $tableList[] = [
                     'alias' => $tableAlias,
                     'uniqueIndexes' => $tableUniqueIndexes,
                     'indexes' => $tableIndexes,
                     'columns' => $tableColumns,
                     'name' => $tableName,
-                    'tablePrimaryKey' => $tablePrimaryKey
+                    'tablePrimaryKey' => $tablePrimaryKey,
+                    'data' => $data
                 ];
             }
             $migrationName = "M{$this->gmdate}Mass";
@@ -246,6 +248,15 @@ class Generator extends \yii\gii\Generator
 
 
         return $files;
+    }
+
+    public function generateData($tableName, $columns = [])
+    {
+        $select = !empty($columns) ? $columns : '*';
+        $query = (new yii\db\Query())->select($select)->from($tableName);
+        $data = $query->all($this->getDbConnection());
+        
+        return $data;
     }
 
     /**

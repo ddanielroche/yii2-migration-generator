@@ -35,11 +35,9 @@ class <?= $migrationName ?> extends Migration
 <?php endforeach; ?>
         ], $tableOptions);
 <?php if (!empty($tableData['tablePrimaryKey']) && is_array($tableData['tablePrimaryKey'])) : ?>
-
         $this->addPrimaryKey('<?= $tableData['name'] ?>_pk', '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>', '<?= implode(", ", $tableData['tablePrimaryKey']) ?>');
 <?php endif; ?>
 <?php if (!empty($tableData['uniqueIndexes']) && is_array($tableData['uniqueIndexes'])) : ?>
-
 <?php foreach ($tableData['uniqueIndexes'] as $name => $columns) : ?>
 <?php if ($name != 'PRIMARY') : ?>
         $this->createIndex('<?= $name ?>', '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>', '<?= implode(", ", $columns) ?>', true);
@@ -52,6 +50,13 @@ class <?= $migrationName ?> extends Migration
         $this->createIndex('<?= $name ?>', '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>', '<?= implode(", ", $columns) ?>', false);
 <?php endif; ?>
 <?php endforeach; ?>
+<?php endif ?>
+<?php if (!empty($tableData['data']) && is_array($tableData['data'])) : ?>
+        $this->batchInsert(
+        '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>',
+        ["<?= implode('", "', array_keys($tableData['columns'])) ?>"],
+        <?= \yii\helpers\VarDumper::export($tableData['data']) ?>
+        );
 <?php endif ?>
 <?php endforeach; ?>
 <?php if (!empty($tableRelations) && is_array($tableRelations)) : ?>
