@@ -51,11 +51,11 @@ class <?= $migrationName ?> extends Migration
 <?php endif; ?>
 <?php endforeach; ?>
 <?php endif ?>
-<?php if (!empty($tableData['data']) && is_array($tableData['data'])) : ?>
+<?php if (!empty($tableData['data']['data']) && is_array($tableData['data']['data'])) : ?>
         $this->batchInsert(
         '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>',
-        ["<?= implode('", "', array_keys($tableData['columns'])) ?>"],
-        <?= \yii\helpers\VarDumper::export($tableData['data']) ?>
+        ["<?= implode('", "', $tableData['data']['columns']) ?>"],
+        <?= \yii\helpers\VarDumper::export($tableData['data']['data']) ?>
         );
 <?php endif ?>
 <?php endforeach; ?>

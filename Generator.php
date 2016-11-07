@@ -223,7 +223,7 @@ class Generator extends \yii\gii\Generator
                     'tableName' => $tableName
                 ];
                 $tablePrimaryKey = $this->generatePrimaryKey($tableSchema);
-                $data = $this->generateData($tableName, array_keys($tableColumns));
+                $data = $this->generateData($tableSchema);
                 $tableList[] = [
                     'alias' => $tableAlias,
                     'uniqueIndexes' => $tableUniqueIndexes,
@@ -250,13 +250,26 @@ class Generator extends \yii\gii\Generator
         return $files;
     }
 
-    public function generateData($tableName, $columns = [])
+    /**
+     * @param TableSchema $tableSchema
+     * @return array
+     */
+    public function generateData($tableSchema)
     {
-        $select = !empty($columns) ? $columns : '*';
-        $query = (new yii\db\Query())->select($select)->from($tableName);
+        $columns = [];
+        foreach ($tableSchema->columns as $column) {
+            if (!$column->autoIncrement) {
+                $columns[] = $column->name;
+            }
+        }
+        
+        $query = (new yii\db\Query())->select($columns)->from($tableSchema->name);
         $data = $query->all($this->getDbConnection());
         
-        return $data;
+        return [
+            'columns' => $columns,
+            'data' => $data
+        ];
     }
 
     /**
