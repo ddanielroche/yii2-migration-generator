@@ -22,6 +22,8 @@ class Generator extends \yii\gii\Generator
     public $gmdate;
     public $structure;
     public $data;
+    public $relations;
+    public $comments;
 
     private $_ignoredTables = [];
     private $_tables = [];
@@ -55,7 +57,7 @@ class Generator extends \yii\gii\Generator
             [['db'], 'validateDb'],
             [['tableName'], 'validateTableName'],
             ['tableOptions', 'safe'],
-            [['usePrefix', 'structure', 'data'], 'boolean'],
+            [['usePrefix', 'structure', 'data', 'relations', 'comments'], 'boolean'],
             [['genmode'], 'in', 'range' => ['single', 'mass']],
 
             [['migrationNamespace'], 'filter', 'filter' => function ($value) {
@@ -94,6 +96,8 @@ class Generator extends \yii\gii\Generator
             'usePrefix' => 'Replace table prefix',
             'structure' => 'Generate Structure',
             'data' => 'Generate Data',
+            'relations' => 'Generate Relations',
+            'comments' => 'Generate Comments',
             'genmode' => 'Generation Mode',
             'tableOptions' => 'Table Options'
         ]);
@@ -147,7 +151,7 @@ class Generator extends \yii\gii\Generator
     {
         return array_merge(
             parent::stickyAttributes(),
-            ['db', 'migrationNamespace', 'usePrefix', 'structure', 'data', 'tableOptions']
+            ['db', 'migrationNamespace', 'usePrefix', 'genmode', 'structure', 'data', 'relations', 'comments', 'tableOptions']
         );
     }
 
@@ -234,7 +238,7 @@ class Generator extends \yii\gii\Generator
                     'data' => $data
                 ];
             }
-            $migrationName = "M{$this->gmdate}Mass";
+            $migrationName = "M{$this->gmdate}Structure";
             $params = [
                 'tableList' => $tableList,
                 'tableRelations' => $tableRelations,
@@ -244,6 +248,32 @@ class Generator extends \yii\gii\Generator
                 Yii::getAlias('@' . str_replace('\\', '/', $this->migrationNamespace)) . "/$migrationName.php",
                 $this->render('mass.php', $params)
             );
+            if ($this->data) {
+                $gmdate = $this->gmdate + 1;
+                $migrationName = "M{$gmdate}Data";
+                $params = [
+                    'tableList' => $tableList,
+                    'tableRelations' => $tableRelations,
+                    'migrationName' => $migrationName
+                ];
+                $files[] = new CodeFile(
+                    Yii::getAlias('@' . str_replace('\\', '/', $this->migrationNamespace)) . "/$migrationName.php",
+                    $this->render('data.php', $params)
+                );
+            }
+            if ($this->relations) {
+                $gmdate = $this->gmdate + 2;
+                $migrationName = "M{$gmdate}Relations";
+                $params = [
+                    'tableList' => $tableList,
+                    'tableRelations' => $tableRelations,
+                    'migrationName' => $migrationName
+                ];
+                $files[] = new CodeFile(
+                    Yii::getAlias('@' . str_replace('\\', '/', $this->migrationNamespace)) . "/$migrationName.php",
+                    $this->render('relation.php', $params)
+                );
+            }
         }
 
 
@@ -257,13 +287,19 @@ class Generator extends \yii\gii\Generator
     public function generateData($tableSchema)
     {
         $columns = [];
+        $order = [];
         foreach ($tableSchema->columns as $column) {
             if (!$column->autoIncrement) {
                 $columns[] = $column->name;
+            } else {
+                $order[$column->name] = SORT_ASC;
             }
         }
         
         $query = (new yii\db\Query())->select($columns)->from($tableSchema->name);
+        if (count($order)) {
+            $query->orderBy($order);
+        }
         $data = $query->all($this->getDbConnection());
         
         return [
@@ -374,7 +410,7 @@ class Generator extends \yii\gii\Generator
             $coldata .= '->notNull()';
         }
         $coldata .= $this->buildDefaultValue($col);
-        if (!empty($col->comment)) {
+        if ($this->comments && !empty($col->comment)) {
             $coldata .= "->comment('$col->comment')";
         }
 

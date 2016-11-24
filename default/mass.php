@@ -51,34 +51,11 @@ class <?= $migrationName ?> extends Migration
 <?php endif; ?>
 <?php endforeach; ?>
 <?php endif ?>
-<?php if (!empty($tableData['data']['data']) && is_array($tableData['data']['data'])) : ?>
-        $this->batchInsert(
-        '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>',
-        ["<?= implode('", "', $tableData['data']['columns']) ?>"],
-        <?= \yii\helpers\VarDumper::export($tableData['data']['data']) ?>
-        );
-<?php endif ?>
 <?php endforeach; ?>
-<?php if (!empty($tableRelations) && is_array($tableRelations)) : ?>
-
-<?php foreach ($tableRelations as $table) : ?>
-<?php foreach ($table['fKeys'] as $i => $rel) : ?>
-        $this->addForeignKey('fk_<?= $table['tableName'] ?>_<?= $i ?>', '<?= ($generator->usePrefix) ? $table['tableAlias'] : $table['tableName'] ?>', '<?= $rel['pk'] ?>', '<?= $rel['ftable'] ?>', '<?= $rel['fk'] ?>');
-<?php endforeach; ?>
-<?php endforeach; ?>
-<?php endif ?>
     }
 
     public function safeDown()
     {
-<?php if (!empty($tableRelations) && is_array($tableRelations)) : ?>
-<?php foreach ($tableRelations as $table) : ?>
-<?php foreach ($table['fKeys'] as $i => $rel) : ?>
-        $this->dropForeignKey('fk_<?= $table['tableName'] ?>_<?= $i ?>', '<?= ($generator->usePrefix) ? $table['tableAlias'] : $table['tableName'] ?>');
-<?php endforeach; ?>
-<?php endforeach; ?>
-
-<?php endif ?>
 <?php foreach ($tableList as $tableData) : ?>
         $this->dropTable('<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>');
 <?php endforeach; ?>
