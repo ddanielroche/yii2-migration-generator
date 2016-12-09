@@ -1,3 +1,5 @@
+image: datazucar/ubuntu:16.04
+
 # Composer stores all downloaded packages in the vendor/ directory.
 # Do not use the following if the vendor/ directory is commited to
 # your git repository.
@@ -5,11 +7,16 @@ cache:
   paths:
   - vendor/
 
-before_script:
+.before_script:
   # Install composer dependencies
   - composer install
 
 # Run PHP Code Sniffer.
-code_sniffer:
+.code_sniffer:
   script:
   - vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2/ --extensions=php --ignore=vendor/ .
+# Prueba de docker.
+test:
+  script:
+  - echo 'Hola Mundo'
+  
