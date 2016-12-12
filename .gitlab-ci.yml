@@ -1,5 +1,3 @@
-image: git.versat.azcuba.cu:4567/backend/yii2-migration-generator:latest
-
 # Composer stores all downloaded packages in the vendor/ directory.
 # Do not use the following if the vendor/ directory is commited to
 # your git repository.
@@ -16,7 +14,18 @@ cache:
   script:
   - vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2/ --extensions=php --ignore=vendor/ .
 # Prueba de docker.
-test:
+test:trusty
+  image: git.versat.azcuba.cu:4567/docker/ubuntu:trusty
   script:
-  - echo 'Hola Mundo'
+  - echo 'Probando Ubuntu:trusty'
+  - lsb_release -a
+  - echo 'Mostrando sources.list'
+  - cat /etc/apt/sources.list
+test::xenial
+  image: git.versat.azcuba.cu:4567/docker/ubuntu:xenial
+  script:
+  - echo 'Probando Ubuntu:xenial'
+  - lsb_release -a
+  - echo 'Mostrando sources.list'
+  - cat /etc/apt/sources.list
   
