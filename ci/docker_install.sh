@@ -12,3 +12,4 @@ apt-get install php-zip git -yqq
 cd /opt/
 git clone https://git.versat.azcuba.cu/backend/composer.git
 composer/install.sh
+composer/install.sh
