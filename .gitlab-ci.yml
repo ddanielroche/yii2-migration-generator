@@ -9,6 +9,7 @@ cache:
 code_sniffer:7.0:
   image: git.versat.azcuba.cu:4567/docker/php:7.0
   before_script:
+  - bash ci/docker_install.sh > /dev/null
   - composer install
   script:
   - vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2/ --extensions=php --ignore=vendor/ .
