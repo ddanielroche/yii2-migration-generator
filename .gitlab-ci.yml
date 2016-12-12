@@ -24,6 +24,8 @@ test:trusty:
 test:xenial:
   image: git.versat.azcuba.cu:4567/docker/ubuntu:xenial
   script:
+  - echo 'Listando directorio'
+  - ls -l
   - echo 'Probando Ubuntu:xenial'
 #  - lsb_release -a
   - echo 'Mostrando sources.list'
