@@ -14,14 +14,14 @@ cache:
   script:
   - vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2/ --extensions=php --ignore=vendor/ .
 # Prueba de docker.
-test:trusty
+test:trusty:
   image: git.versat.azcuba.cu:4567/docker/ubuntu:trusty
   script:
   - echo 'Probando Ubuntu:trusty'
   - lsb_release -a
   - echo 'Mostrando sources.list'
   - cat /etc/apt/sources.list
-test::xenial
+test:xenial:
   image: git.versat.azcuba.cu:4567/docker/ubuntu:xenial
   script:
   - echo 'Probando Ubuntu:xenial'
