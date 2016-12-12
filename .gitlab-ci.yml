@@ -5,23 +5,23 @@ cache:
   paths:
   - vendor/
 
-.before_script:
-  # Install composer dependencies
-  - composer install
-
 # Run PHP Code Sniffer.
-.code_sniffer:
+code_sniffer:7.0:
+  image: git.versat.azcuba.cu:4567/docker/php:7.0
+  before_script:
+  - composer install
   script:
   - vendor/bin/phpcs --standard=vendor/yiisoft/yii2-coding-standards/Yii2/ --extensions=php --ignore=vendor/ .
+
 # Prueba de docker.
-test:trusty:
+.test:trusty:
   image: git.versat.azcuba.cu:4567/docker/ubuntu:trusty
   script:
   - echo 'Probando Ubuntu:trusty'
   - lsb_release -a
   - echo 'Mostrando sources.list'
   - cat /etc/apt/sources.list
-test:xenial:
+.test:xenial:
   image: git.versat.azcuba.cu:4567/docker/ubuntu:xenial
   script:
   - echo 'Listando directorio'
