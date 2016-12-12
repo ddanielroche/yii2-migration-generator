@@ -25,7 +25,7 @@ test:xenial:
   image: git.versat.azcuba.cu:4567/docker/ubuntu:xenial
   script:
   - echo 'Probando Ubuntu:xenial'
-  - lsb_release -a
+#  - lsb_release -a
   - echo 'Mostrando sources.list'
   - cat /etc/apt/sources.list
   
