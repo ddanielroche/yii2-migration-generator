@@ -23,7 +23,7 @@ class <?= $migrationName ?> extends Migration
 <?php if (!empty($tableRelations) && is_array($tableRelations)) : ?>
 <?php foreach ($tableRelations as $table) : ?>
 <?php foreach ($table['fKeys'] as $i => $rel) : ?>
-        $this->addForeignKey('fk_<?= $table['tableName'] ?>_<?= $i ?>', '<?= ($generator->usePrefix) ? $table['tableAlias'] : $table['tableName'] ?>', '<?= $rel['pk'] ?>', '<?= $rel['ftable'] ?>', '<?= $rel['fk'] ?>');
+        $this->addForeignKey('<?= $i ?>', '<?= ($generator->usePrefix) ? $table['tableAlias'] : $table['tableName'] ?>', '<?= $rel['pk'] ?>', '<?= $rel['ftable'] ?>', '<?= $rel['fk'] ?>');
 <?php endforeach; ?>
 <?php endforeach; ?>
 <?php endif ?>
@@ -34,7 +34,7 @@ class <?= $migrationName ?> extends Migration
 <?php if (!empty($tableRelations) && is_array($tableRelations)) : ?>
 <?php foreach ($tableRelations as $table) : ?>
 <?php foreach ($table['fKeys'] as $i => $rel) : ?>
-        $this->dropForeignKey('fk_<?= $table['tableName'] ?>_<?= $i ?>', '<?= ($generator->usePrefix) ? $table['tableAlias'] : $table['tableName'] ?>');
+        $this->dropForeignKey('<?= $i ?>', '<?= ($generator->usePrefix) ? $table['tableAlias'] : $table['tableName'] ?>');
 <?php endforeach; ?>
 <?php endforeach; ?>
 <?php endif ?>

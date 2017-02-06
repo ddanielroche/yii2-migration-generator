@@ -39,4 +39,5 @@ echo $form->field($generator, 'structure')->checkbox();
 echo $form->field($generator, 'data')->checkbox();
 echo $form->field($generator, 'relations')->checkbox();
 echo $form->field($generator, 'comments')->checkbox();
-echo \yii\helpers\Html::activeHiddenInput($generator, 'gmdate');
+echo $form->field($generator, 'gmdate');
+//echo \yii\helpers\Html::activeHiddenInput($generator, 'gmdate');

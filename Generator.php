@@ -286,26 +286,10 @@ class Generator extends \yii\gii\Generator
      */
     public function generateData($tableSchema)
     {
-        $columns = [];
-        $order = [];
-        foreach ($tableSchema->columns as $column) {
-            if (!$column->autoIncrement) {
-                $columns[] = $column->name;
-            } else {
-                $order[$column->name] = SORT_ASC;
-            }
-        }
+        $columns = $tableSchema->getColumnNames();
+        $data = (new yii\db\Query())->select($columns)->from($tableSchema->name)->all($this->getDbConnection());
         
-        $query = (new yii\db\Query())->select($columns)->from($tableSchema->name);
-        if (count($order)) {
-            $query->orderBy($order);
-        }
-        $data = $query->all($this->getDbConnection());
-        
-        return [
-            'columns' => $columns,
-            'data' => $data
-        ];
+        return compact('columns', 'data');
     }
 
     /**

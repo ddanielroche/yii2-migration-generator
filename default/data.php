@@ -24,12 +24,23 @@ class <?= $migrationName ?> extends Migration
     {
 <?php foreach ($tableList as $tableData) : ?>
 <?php if (!empty($tableData['data']['data']) && is_array($tableData['data']['data'])) : ?>
+        $tableName = '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>';
         $this->batchInsert(
-            '<?= ($generator->usePrefix) ? $tableData['alias'] : $tableData['name'] ?>',
+            $tableName,
             ['<?= implode("', '", $tableData['data']['columns']) ?>'],
-<?= \yii\helpers\VarDumper::export($tableData['data']['data']) ?>
-
+            [
+<?php foreach ($tableData['data']['data'] as $data) : ?>
+                [
+<?php foreach ($data as $key => $value) : ?>
+                    '<?= $key ?>' => <?= \yii\helpers\VarDumper::export($value) ?>,
+<?php endforeach; ?>
+                ],
+<?php endforeach; ?>
+            ]
         );
+        if ($this->db->getTableSchema($tableName)->sequenceName !== null) {
+            $this->db->createCommand()->resetSequence($tableName)->execute();
+        }
 <?php endif ?>
 <?php endforeach; ?>
     }
