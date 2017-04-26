@@ -13,16 +13,17 @@ use yii\helpers\Inflector;
 class Generator extends \yii\gii\Generator
 {
     public $db = 'db';
-    public $migrationNamespace = 'app\migrations';
+    public $migrationNamespace;
+    public $migrationNamespaces = [];
     public $tableName;
     public $tableIgnore;
-    public $genmode = 'single';
-    public $usePrefix = true;
-    public $tableOptions = 'ENGINE=InnoDB';
+    public $genmode = 'mass';
+    public $usePrefix = false;
+    public $tableOptions = '';
     public $gmdate;
-    public $structure;
+    public $structure = true;
     public $data;
-    public $relations;
+    public $relations = true;
     public $comments;
 
     private $_ignoredTables = [];
