@@ -1,5 +1,5 @@
 {
-    "name": "datazucar/yii2-migration-generator",
+    "name": "ddroche/yii2-migration-generator",
     "description": "Generate migration files for one table, comma separated list of tables, part of table name or all tables.",
     "type": "yii2-extension",
     "keywords": [
